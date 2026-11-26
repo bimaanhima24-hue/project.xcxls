@@ -5,117 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pratinjau Dokumen Excel - project.xcxls</title>
     <style>
+        :root {
+            --bg-page: #f3f4f6;
+            --bg-bar: #111827;
+            --bg-tab: #1f2937;
+            --bg-tab-hover: #374151;
+            --bg-tab-active: #2563eb;
+            --bg-download: #059669;
+            --bg-download-hover: #047857;
+            --text-light: #f9fafb;
+            --text-muted: #d1d5db;
+        }
+
         * {
             box-sizing: border-box;
         }
-        body, html {
+
+        html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             display: flex;
             flex-direction: column;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-page);
         }
+
         .toolbar {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
-            padding: 10px 14px;
-            background-color: #1f2937;
-            color: #ffffff;
+            gap: 10px;
+            padding: 10px 16px;
+            background-color: var(--bg-bar);
+            color: var(--text-light);
+            border-bottom: 1px solid #374151;
         }
+
         .tabs {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
+
         .tab-btn {
             padding: 8px 14px;
-            border: none;
+            border: 1px solid #374151;
             border-radius: 6px;
-            background-color: #374151;
-            color: #e5e7eb;
-            cursor: pointer;
+            background-color: var(--bg-tab);
+            color: var(--text-muted);
             font-size: 13px;
-            transition: background-color 0.2s ease;
+            line-height: 1.2;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
+
         .tab-btn:hover {
-            background-color: #4b5563;
+            background-color: var(--bg-tab-hover);
+            color: var(--text-light);
         }
+
         .tab-btn.active {
-            background-color: #2563eb;
-            color: #ffffff;
-            font-weight: bold;
+            background-color: var(--bg-tab-active);
+            border-color: var(--bg-tab-active);
+            color: var(--text-light);
+            font-weight: 600;
         }
+
         .download-link {
-            padding: 8px 12px;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
             border-radius: 6px;
-            background-color: #059669;
-            color: #ffffff;
+            background-color: var(--bg-download);
+            color: var(--text-light);
             text-decoration: none;
             font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background-color 0.15s ease;
         }
+
         .download-link:hover {
-            background-color: #047857;
+            background-color: var(--bg-download-hover);
         }
+
         .viewer-container {
             flex: 1;
+            min-height: 0;
             width: 100%;
-            position: relative;
         }
+
         iframe {
             width: 100%;
             height: 100%;
             border: none;
             display: block;
+            background-color: #ffffff;
         }
     </style>
 </head>
 <body>
-    <div class="toolbar">
-        <div class="tabs" id="fileTabs">
+    <header class="toolbar">
+        <nav class="tabs" id="fileTabs" aria-label="Pilihan file Excel">
             <button
+                type="button"
                 class="tab-btn active"
-                data-raw="https://raw.githubusercontent.com/bimaanhima24-hue/project.xcxls/main/DATA%20PENGUNJUNG%20FARMASI%20OKT-DESem.xlsx"
-                onclick="switchFile(this)">
+                data-raw="https://github.com/bimaanhima24-hue/project.xcxls/raw/refs/heads/main/DATA%20PENGUNJUNG%20FARMASI%20OKT-DESem.xlsx"
+                data-filename="DATA PENGUNJUNG FARMASI OKT-DESem.xlsx"
+                onclick="selectTab(this)">
                 Data Pengunjung Farmasi Okt-Des
             </button>
             <button
+                type="button"
                 class="tab-btn"
-                data-raw="https://raw.githubusercontent.com/bimaanhima24-hue/project.xcxls/main/Latihan%20Dashbord.xlsx"
-                onclick="switchFile(this)">
+                data-raw="https://github.com/bimaanhima24-hue/project.xcxls/raw/refs/heads/main/Latihan%20Dashbord.xlsx"
+                data-filename="Latihan Dashbord.xlsx"
+                onclick="selectTab(this)">
                 Latihan Dashboard
             </button>
-        </div>
-        <a id="downloadBtn" class="download-link" href="#" download>Unduh File (.xlsx)</a>
-    </div>
+        </nav>
 
-    <div class="viewer-container">
-        <iframe id="excelViewer" src="" title="Pratinjau File Excel"></iframe>
-    </div>
+        <a id="downloadBtn" class="download-link" href="#" download="file.xlsx">
+            Unduh File (.xlsx)
+        </a>
+    </header>
+
+    <main class="viewer-container">
+        <iframe id="excelViewer" src="" title="Pratinjau Dokumen Excel"></iframe>
+    </main>
 
     <script>
         const viewer = document.getElementById("excelViewer");
         const downloadBtn = document.getElementById("downloadBtn");
-        const buttons = document.querySelectorAll(".tab-btn");
+        const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
 
-        function loadExcel(rawUrl) {
-            const encodedUrl = encodeURIComponent(rawUrl);
-            viewer.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodedUrl;
+        function renderFile(rawUrl, fileName) {
+            viewer.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(rawUrl);
             downloadBtn.href = rawUrl;
+            if (fileName) {
+                downloadBtn.setAttribute("download", fileName);
+                downloadBtn.textContent = "Unduh (" + fileName + ")";
+            } else {
+                downloadBtn.setAttribute("download", "dokumen.xlsx");
+                downloadBtn.textContent = "Unduh File (.xlsx)";
+            }
         }
 
-        function switchFile(clickedBtn) {
-            buttons.forEach(btn => btn.classList.remove("active"));
-            clickedBtn.classList.add("active");
-            loadExcel(clickedBtn.getAttribute("data-raw"));
+        function selectTab(button) {
+            tabButtons.forEach((btn) => {
+                const isSelected = btn === button;
+                btn.classList.toggle("active", isSelected);
+                btn.setAttribute("aria-pressed", isSelected ? "true" : "false");
+            });
+
+            const rawUrl = button.getAttribute("data-raw");
+            const fileName = button.getAttribute("data-filename");
+            renderFile(rawUrl, fileName);
         }
 
-        // Muat file pertama saat halaman dibuka
-        loadExcel(buttons[0].getAttribute("data-raw"));
+        // Muat tab pertama secara otomatis saat halaman dibuka
+        if (tabButtons.length > 0) {
+            selectTab(tabButtons[0]);
+        }
     </script>
 </body>
 </html>
